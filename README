@@ -1,0 +1,73 @@
+Atmel AVR oscillator calibration routines
+
+This implements oscillator calibration routines as described in AVR053.
+Provided are a firmware that talks the protocol described in AVR053 as well
+as a python script that can provide the necessary stimulus via an FTDI
+programmer.
+
+The firmware was written for and tested with an ATTiny45, but it should work
+across a wide range of AVRs.
+
+Steps:
+
+1) Edit the Makefile to configure the firmware for your system:
+
+	DEVICE -	The name for your AVR device
+	PROGRAMMER -	Which avrdude programmer to use
+	F_CPU -		The configured frequency of your CPU clock
+	INPUT_FREQ -	The stimulus frequency (default 32768Hz)
+	FREQ_CYCLES -	Stimulus frequency cycles to measure (default 40)
+	OSCCAL_MAXD -	Maximum amount OSCCAL can be changed at once
+	OSC_VER -	The version of your device's oscillator
+	MOSI -		Your AVR's MOSI pin number
+	MISO -		Your AVR's MISO pin number
+
+2) Edit the stimulus script (osccal_ftdi.py) to suit your system:
+
+	clock_rate -	The stimulus frequency
+	mosi -		Your programmer's MOSI pin number
+	miso -		Your programmer's MISO pin number
+	rst -		Your programmer's reset pin number
+	buff -		A bit to enable buffers on your programmer
+	ftdi_vendor -	USB vendor ID of your programmer
+	ftdi_product -	USB product ID of your programmer
+
+2) Configure and flash the efuses if necessary:
+
+	The Makefile provides support for defining efuse settings and
+	storing them with 'make fuse'
+
+3) Build and flash the firmware:
+
+	make flash
+
+4) Run the stimulus script:
+
+	Running the stimulus script gives a fixed clock frequency to the
+	calibration firmware. When the calibration firmware finds the best
+	frequency within a 1% tolerance, it programs it to eeprom address 0.
+
+	./osccal_ftdi.py
+
+5) Observe output:
+
+	You'll either see a success:
+
+		Waiting for MISO high...
+		Sending training clock...
+		Success!
+
+	Or a calibration failure:
+
+		Waiting for MISO high...
+		Sending training clock...
+		Failed
+
+6) Check new OSCCAL value (optional):
+
+	make current
+
+		Current OSCCAL: 0x48
+		Factory calibration: 0x52
+
+
