@@ -48,7 +48,7 @@ osccal_loop:
 	rjmp 1b			/* 1 (when skipped) */
 
 	/* Move these inits here to delay 2 cycles to match with end */
-	out TIFR, r19
+	out TIFR, r24
 	ldi r24, _BV(CS00)	/* No prescaler */
 
 	/* Start timer */
