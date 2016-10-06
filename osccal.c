@@ -113,11 +113,13 @@ static bool calibrate_range(unsigned char osccal_min, unsigned char osccal_max)
 	}
 
 	OSCCAL = best;
-	return min_deviation < TOLERANCE_TICKS;
+	return min_deviation;
 }
 
 int main(void)
 {
+	unsigned short min_deviation;
+
 	/* Don't process interrupts */
 	cli();
 
@@ -135,14 +137,25 @@ int main(void)
 		wdt_reset();
 
 #if (OSC_VER == 1) || (OSC_VER == 2) || (OSC_VER == 3)
-	if (!calibrate_range(0, 0xff)) {
+	min_deviation = calibrate_range(0, 0xff);
 #elif OSC_VER == 4
-	if (!calibrate_range(0, 0x7f)) {
+	min_deviation = calibrate_range(0, 0x7f);
 #elif OSC_VER == 5
-	if (!calibrate_range(0, 0x7f) && !calibrate_range(0x80, 0xff)) {
+	min_deviation = calibrate_range(0, 0x7f);
+	{
+		unsigned char range1_osccal = OSCCAL;
+		unsigned range2_min_deviation =  calibrate_range(0x80, 0xff);
+		if (range2_min_deviation < min_deviation)
+			min_deviation = range2_min_deviation;
+		else
+			OSCCAL = range1_osccal;
+	}
 #else
 #error "Invalid OSC_VER"
 #endif
+
+	if (min_deviation > TOLERANCE_TICKS) {
+
 		/* Calibration failed, clear MISO pin */
 		PINB |= _BV(MISO);
 	} else {
