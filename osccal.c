@@ -166,6 +166,20 @@ int main(void)
 		/* Complete, signal by toggling MISO pin */
 		wdt_reset();
 		signal_done();
+
+#ifdef DEBUG_WAVEFORM
+		/* Runs at F_CPU / (2 * (3 * 255 + 5)) Hz */
+		asm(
+		"	ldi r16, %[miso]\n"
+		"1:	dec r1\n"
+		"	brne 1b\n"
+		"	out %[pinb], r16\n"
+		"	rjmp 1b\n"
+			:
+			: [pinb] "I"(_SFR_IO_ADDR(PINB)),
+			  [miso] "M"(_BV(MISO)));
+#endif
+
 	}
 
 	for (;;)
